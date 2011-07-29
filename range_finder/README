@@ -1,0 +1,16 @@
+-------------------------
+| Daisy Shell
+-------------------------
+This is a simple shell that shows off how to use CmdMessenger to control the Daisy.
+I think it just toggles the visible LED on/off with a command.  The can use it as
+a skeleton for a new project to get started quickly.
+
+$ cp Makefile.sample Makefile
+$ vi Makefile 
+	(edit for your environment)
+$ make
+$ make upload
+
+Make sure you read ../README.txt to understand the build process.
+
+

@@ -1,0 +1,51 @@
+
+# Board (and prozessor) information: see $(ARDUINO_PATH)hardware/arduino/boards.txt
+# Some examples:
+#	BOARD		DESCRIPTION
+#	uno			Arduino Uno
+#	atmega328	Arduino Duemilanove or Nano w/ ATmega328
+#	diecimila		Arduino Diecimila, Duemilanove, or Nano w/ ATmega168
+#	mega		Arduino Mega
+#	mini			Arduino Mini
+#	lilypad328	LilyPad Arduino w/ ATmega328  
+BOARD:=daisyv1
+
+# The location where the avr tools (e.g. avr-gcc) are located. Requires a '/' at the end.
+# Can be empty if all tools are accessable through the search path
+AVR_TOOLS_PATH:=/usr/bin/
+
+# Install path of the arduino software. Requires a '/' at the end.
+ARDUINO_PATH:=/home/davis/arduino/arduino-0022/
+ARDUINO_LIBS:=$(ARDUINO_PATH)libraries
+
+# Install path for avrdude. Requires a '/' at the end. Can be empty if avrdude is in the search path.
+AVRDUDE_PATH:= 
+
+# The unix device where we can reach the arduino board
+# Uno: /dev/ttyACM0
+# Duemilanove: /dev/ttyUSB0
+AVRDUDE_PORT:=/dev/ttyUSB0
+
+EXTRA_DIRS:=
+
+# Comment in only those Arduino libraries which you need to use
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/EEPROM/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Ethernet/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Ethernet/utility/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Firmata/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/LiquidCrystal/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Matrix/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/SD/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/SD/utility/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Servo/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/SoftwareSerial/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/SPI/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Sprite/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Stepper/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Wire/
+#EXTRA_DIRS+=$(ARDUINO_LIBS)/Wire/utility/
+
+include ../Include.mk
+
+
+

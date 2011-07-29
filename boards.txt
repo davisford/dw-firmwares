@@ -1,0 +1,23 @@
+
+##############################################################
+
+daisyv1.name=Daisy v1
+
+daisyv1.upload.protocol=stk500
+daisyv1.upload.maximum_size=30720
+daisyv1.upload.speed=57600
+
+daisyv1.bootloader.low_fuses=0xFF
+daisyv1.bootloader.high_fuses=0xDA
+daisyv1.bootloader.extended_fuses=0x05
+daisyv1.bootloader.path=atmega
+daisyv1.bootloader.file=ATmegaBOOT_168_atmega328.hex
+daisyv1.bootloader.unlock_bits=0x3F
+daisyv1.bootloader.lock_bits=0x0F
+
+daisyv1.build.mcu=atmega328p
+daisyv1.build.f_cpu=16000000L
+daisyv1.build.core=arduino
+
+##############################################################
+
