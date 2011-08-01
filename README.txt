@@ -1,6 +1,32 @@
 --------------------------------
 DaisyWorks firmware repository
 --------------------------------
+This is the repo for various firmwares for the Daisy.  The Daisy is an Arduino-derivative board that includes:
+
+a) Class 1 Bluetooth Modem
+b) SD Card
+c) IrDA
+d) 3 RJ25, and 1 RJ45 jacks that allow you to easily swap out various sensors and controls (e.g. light, moisture, temp, etc.)
+e) Servo control ports
+
+The Daisy uses the Atmel ATMEGA328 microcontroller.  It is compatible with the Arduino, which means you can use Arduino libraries
+to build firmware for the Daisy (in fact, we do).  It als has the Arduino stk500 bootloader, and we've built software that 
+allows you to do Firmware-Over-The-Air (FOTA) to reprogram the Daisy using Bluetooth from your Android phone or Desktop Computer
+(Mac / Windows / Linux).
+
+We've also built an App Store that allows you to quickly browse applications that are custom made for the various sensors / controls
+we sell for the Daisy.  To find out more information, check our website 
+
+http://daisyworks.com
+
+This repository has all the source code we are using in our sample applications we have built.  Instructions are on the website
+and simple instructions are provided below on how to get started.  
+
+-------------------------
+| License
+_________________________
+
+All the code in this repository is public domain which means you are free to modify it, edit it, or do whatever you want with it.   If we use libraries used by others, we credit them in the README and provide a link to the original source.  If we use code that has an open source license attached to it, we'll include a copy of the license and credit.
 
 -------------------------
 | Pre-requisites
@@ -38,7 +64,7 @@ Step into a subdir for a firmware image, and:
 
 $ cp Makefile.sample Makefile
 
-Now, edit Makefile to your environment.
+Now, edit Makefile to your environment...at the very least you will need to point the Makefile to where the Arduino distribution lives
 
 $ make
 $ make clean
@@ -75,5 +101,16 @@ To include these libraries in your code, you do it like this:
 $ make upload
 
 This calls out to avrdude directly.  Before doing so, it calls the python reset.py script to toggle DTR/RTS.
+
+--------------------------
+| Serial Port
+--------------------------
+If you have gtkterm installed (which you should), then you may run:
+
+$ make serial
+
+And it will launch gtkterm and connect to the device so you can interact with it via the terminal
+
+
 
 
