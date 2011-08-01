@@ -26,7 +26,7 @@ and simple instructions are provided below on how to get started.
 | License
 _________________________
 
-All the code in this repository is public domain which means you are free to modify it, edit it, or do whatever you want with it.   If we use libraries used by others, we credit them in the README and provide a link to the original source.  If we use code that has an open source license attached to it, we'll include a copy of the license and credit.
+All the code in this repository is public domain which means you are free to modify it to your heart's content.   If we use libraries created by others, we credit them in the README and provide a link to the original source.  If we use code that has an open source license attached to it, we'll include a copy of the license and credit.
 
 -------------------------
 | Pre-requisites
