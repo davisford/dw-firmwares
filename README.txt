@@ -9,18 +9,14 @@ c) IrDA
 d) 3 RJ25, and 1 RJ45 jacks that allow you to easily swap out various sensors and controls (e.g. light, moisture, temp, etc.)
 e) Servo control ports
 
-The Daisy uses the Atmel ATMEGA328 microcontroller.  It is compatible with the Arduino, which means you can use Arduino libraries
-to build firmware for the Daisy (in fact, we do).  It als has the Arduino stk500 bootloader, and we've built software that 
-allows you to do Firmware-Over-The-Air (FOTA) to reprogram the Daisy using Bluetooth from your Android phone or Desktop Computer
+The Daisy uses the Atmel ATMEGA328 microcontroller.  It is compatible with the Arduino, which means you can use Arduino libraries to build firmware for the Daisy (in fact, we do).  It als has the Arduino stk500 bootloader, and we've built software that allows you to do Firmware-Over-The-Air (FOTA) to reprogram the Daisy using Bluetooth from your Android phone or Desktop Computer
 (Mac / Windows / Linux).
 
-We've also built an App Store that allows you to quickly browse applications that are custom made for the various sensors / controls
-we sell for the Daisy.  To find out more information, check our website 
+We've also built an App Store that allows you to quickly browse applications that are custom made for the various sensors / controls we sell for the Daisy.  To find out more information, check our website:
 
 http://daisyworks.com
 
-This repository has all the source code we are using in our sample applications we have built.  Instructions are on the website
-and simple instructions are provided below on how to get started.  
+This repository has all the source code we are using in our sample applications we have built.  Instructions are on the website and simple instructions are provided below on how to get started.  
 
 -------------------------
 | License
