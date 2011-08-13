@@ -44,6 +44,7 @@ void socket_one_off();
 void socket_two_off();
 void socket_one_status();
 void socket_two_status();
+void socket_one_dim();
 
 // __________________ C M D  L I S T I N G ( T X / R X ) ____________________
 
@@ -65,6 +66,7 @@ messengerCallbackFunction messengerCallbacks[] =
   socket_two_off,		// = 007
   socket_one_status,		// = 008
   socket_two_status,		// = 009
+  socket_one_dim,		// = 010
   NULL
 };
 
@@ -122,6 +124,18 @@ void socket_two_status() {
   char val[4];
   itoa(analogRead(socket2_sense), val, 10);
   cmdMessenger.sendCmd(kACK, val);
+}
+
+void socket_one_dim() {
+  int val = 1;
+
+  // experiment with PWM
+  for(int i=0; i<1000; i++) {
+    digitalWrite(socket1_control, HIGH);
+    delay(val);
+    digitalWrite(socket1_control, LOW);
+    delay(val);
+  }
 }
 
 // __________________ S E T U P ________________________________________________
