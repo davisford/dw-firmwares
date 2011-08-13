@@ -10,17 +10,12 @@
 // Origin: http://arduiniana.org/libraries/streaming/
 #include "Streaming.h"
 
-#include "NewSoftSerial.h"
-
 // Mustnt conflict / collide with our message payload data. Fine if we use base64 library ^^ above
 char field_separator = ',';
 char command_separator = ';';
 
 // Attach a new CmdMessenger object to the default Serial port
 CmdMessenger cmdMessenger = CmdMessenger(Serial, field_separator, command_separator);
-
-// soft serial to get range values
-NewSoftSerial range(A5, A4, true);
 
 /*
   Port C: 4, 6 are control lines, A3->4 sense, A1->6 sense
@@ -29,13 +24,6 @@ const int socket1_control = 4;
 const int socket2_control = 6;
 const int socket1_sense   = A1;
 const int socket2_sense   = A3;
-
-// toggle B4 hi to turn on, lo to turn off
-// read A3 (lo) means on for B4; read A3 (lo) means on for B6
-
-// the last value read from the sensor
-String lastValue;
-String currentValue;
 
 // __________________ FUNCTION DECLARATIONS _________________________________
 void socket_one_on();
@@ -88,11 +76,6 @@ void unknownCmd()
 }
 
 // __________________ C A L L B A C K  M E T H O D S __________________________
-void read() {
-  char buf[4];
-  lastValue.toCharArray(buf, 4);
-  cmdMessenger.sendCmd(kACK, buf);
-}
 
 void socket_one_on() {
   digitalWrite(socket1_control, HIGH);
@@ -127,7 +110,7 @@ void socket_two_status() {
 }
 
 void socket_one_dim() {
-  int val = 1;
+  int val = 9;
 
   // experiment with PWM
   for(int i=0; i<1000; i++) {
@@ -170,16 +153,16 @@ void setup()
 
   arduino_ready();
 
-  // turn led on
-  pinMode(4, OUTPUT);
-  pinMode(6, OUTPUT);
+  // set pin mode of socket control ports
+  pinMode(socket1_control, OUTPUT);
+  pinMode(socket2_control, OUTPUT);
 }
 
 
 // ------------------ M A I N ( ) --------------------------------------------
 
 // Timeout handling
-long timeoutInterval = 500; // 1/2 seconds
+long timeoutInterval = 1000; // 2 seconds
 long previousMillis = 0;
 int counter = 0;
 
@@ -192,25 +175,6 @@ void timeout()
 
 void loop() 
 {
-  // range finder outputs as R###0x0D
-  // unit is in inches, so R0150x0D means 15 inches
-  if (range.available()) {
-    char rx_char = (char) range.read();
-    if (rx_char == 'R') {
-      // start over, R means start of new data
-      currentValue = "";
-    } 
-      // 0x0D means termination of the range value
-    else if (rx_char == (char)0x0D) {
-        lastValue = currentValue;
-	currentValue = "";
-    } 
-    else {
-      // append
-      currentValue += rx_char;
-    }
-  }
-
   // handle timeout function, if any
   if (  millis() - previousMillis > timeoutInterval )
   {
