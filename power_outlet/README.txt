@@ -1,30 +1,47 @@
 -------------------------
-| Daisy Ultrasonic Range Finder Firmware
+| Daisy Power Outlet Firmware
 -------------------------
-This firmware works with the Daisy Ultrasonic Range Finder.
+This firmware works with the Daisy Power Outlet Petal 
 
-http://daisyworks.com/products.html#daisypetals
+* --- (currently not for sale) --- *
 
-You can poll it for the distance.
+You must plug this into PORT C of the Daisy
 
-The command to read the range is:
+You can toggle switches on/off with this or use PWM for dimming
 
-4;
+Commands:
+
+4; => socket one ON
+5; => socket one OFF
+6; => socket two ON
+7; => socket two OFF
+
+8; => sense socket two ON/OFF
+9; => sense socket one ON/OFF
+10; => PWM dimmer (not working)
 
 The successful command response will be
 
 1, XXXX;
 
-Where XXXX = the distance in inches
+Where XXXX = a hi/lo analog value indicating the on/off state (lo value = on, hi value = off)
 
-The minimum is 6 inches, the maximum is 255 inches
+Example:
+
+tx> 4;					<- turn the socket on
+rx> 1,socket one should be ON;
+tx> 9;					<- read the state of the socket
+rx> 1,51;
+tx> 5;					<- turn the socket off
+rx> 1,socket one should be OFF;
+tx> 9;					<- read the state of the socket
+rx> 1,1023;
 
 -------------------------
 | Libraries Used
 -------------------------
 CmdMessenger 	https://github.com/dreamcat4/CmdMessenger
 Streaming	http://arduiniana.org/libraries/streaming/
-NewSoftSerial	http://arduiniana.org/libraries/newsoftserial/
 
 -------------------------
 | Build
