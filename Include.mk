@@ -188,7 +188,7 @@ upload: $(HEXNAME)
 	python ../reset.py -P$(AVRDUDE_PORT)
 	$(AVRDUDE) $(AVRDUDE_FLAGS)
 
-serial: upload
+serial: 
 	gtkterm -e -p $(AVRDUDE_PORT) -s 57600
 
 # === dependency handling ===

@@ -43,6 +43,11 @@ CmdMessenger cmdMessenger = CmdMessenger(Serial, field_separator, command_separa
 // this buffer holds whatever is being read: it must be as large as the largest string
 static char STR_BUF[50];
 
+// Timeout handling
+long timeoutInterval = 2000; // 2 seconds
+long previousMillis = 0;
+int counter = 0;
+
 // string constants stored in flash
 enum {
    SCAN_COMPLETE,
@@ -71,6 +76,7 @@ char* readString(int index);
 
 void scan_onewire();
 void get_num_sensors();
+void set_interval();
 void readSensors();
 
 // __________________ CMD LISTING (TX/RX) ______________________________________
@@ -86,7 +92,8 @@ enum {
 messengerCallbackFunction messengerCallbacks[] = {
    scan_onewire,	// 004
    get_num_sensors,	// 005
-   readSensors		// 006
+   readSensors,		// 006
+   set_interval		// 007
 };
 
 // __________________ DEFAULT CALLBACKS ________________________________________
@@ -223,6 +230,21 @@ void readSensors() {
   }
 }
 
+/* command 007
+ Sets the timeout interval
+*/
+void set_interval() {
+  while (cmdMessenger.available()) {
+     char buf[10] = {'\0'};
+     cmdMessenger.copyString(buf, 10);
+     int val = atoi(buf);
+     // sanity check this value
+     if(val < 2000) { timeoutInterval = 2000; }
+     else if(val > 86400) { timeoutInterval = 86400; }
+     else { timeoutInterval = val; }
+  }
+}
+
 /* copies a string from flash into the static STR_BUF SRAM var, returns the pointer */
 char* readString(int idx) {
    strcpy_P(STR_BUF, (char*) pgm_read_word( &(string_table[idx]) ) );
@@ -263,15 +285,9 @@ void setup(void) {
 
 // ___________________ M A I N ( ) _____________________________________________
 
-// Timeout handling
-long timeoutInterval = 2000; // 2 seconds
-long previousMillis = 0;
-int counter = 0;
-
 void timeout()
 {
-  // add code in here you want to 
-  // execute every timeoutInterval seconds
+  readSensors();
 }  
 
 void loop() 
