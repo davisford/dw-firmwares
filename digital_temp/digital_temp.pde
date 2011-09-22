@@ -19,6 +19,10 @@
 // Origin: http://arduiniana.org/libraries/streaming/
 #include "Streaming.h"
 
+// SD library (included in local libraries folder)
+// Origin: arduino-022/libraries
+#include <SD.h>
+
 #include <avr/pgmspace.h>
 
 // max number of sensors we support on one onewire
@@ -48,13 +52,21 @@ long timeoutInterval = 2000; // 2 seconds
 long previousMillis = 0;
 int counter = 0;
 
+//SD chip select
+const int SD_CS = 10;
+boolean sdAvailable = false;
+File dataFile;
+boolean suspend = false;
+
 // string constants stored in flash
 enum {
    SCAN_COMPLETE,
    CRC_INVALID,
    WRONG_DEVICE,
    DAISY_READY,
-   UNKNOWN_CMD
+   UNKNOWN_CMD,
+   SD_CARD_INIT,
+   SD_CARD_FAILURE
 };
 
 prog_char string0[] PROGMEM = "1-wire scan complete. Number of sensors found: "; // size=48
@@ -62,13 +74,17 @@ prog_char string1[] PROGMEM = "CRC is not valid";
 prog_char string2[] PROGMEM = "Device is not a DS18S20";
 prog_char string3[] PROGMEM = "Daisy is ready!";
 prog_char string4[] PROGMEM = "Unknown command";
+prog_char string5[] PROGMEM = "SD card failed init or not inserted";
+prog_char string6[] PROGMEM = "SD card file read/write failed";
 
 PROGMEM const char *string_table[] = {
  string0, 
  string1, 
  string2,
  string3,
- string4
+ string4,
+ string5,
+ string6
 };
 
 // __________________ FUNCTION DECLARATIONS ____________________________________
@@ -78,6 +94,9 @@ void scan_onewire();
 void get_num_sensors();
 void set_interval();
 void readSensors();
+void log_data();
+void dump_data();
+void delete_data();
 
 // __________________ CMD LISTING (TX/RX) ______________________________________
 enum {
@@ -93,7 +112,9 @@ messengerCallbackFunction messengerCallbacks[] = {
    scan_onewire,	// 004
    get_num_sensors,	// 005
    readSensors,		// 006
-   set_interval		// 007
+   set_interval,	// 007
+   dump_data,           // 008
+   delete_data          // 009
 };
 
 // __________________ DEFAULT CALLBACKS ________________________________________
@@ -154,6 +175,9 @@ static char READING[35];
  Scans through all known sensors and reads their data
 */
 void readSensors() {
+  if (suspend) {
+    return;
+  }
   byte sensor;
   byte data[12];
   int LoByte, HiByte, Temp, SignBit, TempC, Whole, Fract;
@@ -176,7 +200,7 @@ void readSensors() {
     onewire.select(addr[sensor]);
     onewire.write(0x44,1);         // start conversion, with parasite power on at the end
 
-    delay(1000);     // maybe 750ms is enough, maybe not
+    //delay(1000);     // maybe 750ms is enough, maybe not
     // we might do a onewire.depower() here, but the reset will take care of it.
 
     // reset 1-wire bus; necessary before communicating with any device
@@ -195,6 +219,7 @@ void readSensors() {
     LoByte = data[0];
     HiByte = data[1];
     Temp = (HiByte << 8) + LoByte;
+
     SignBit = Temp & 0x8000;  // test most sig bit
     if (SignBit) // negative
     {
@@ -225,6 +250,8 @@ void readSensors() {
 	addr[sensor][7],
 	TempStr);
 
+    log_data();
+
     cmdMessenger.sendCmd(kACK, READING);
 
   }
@@ -242,6 +269,50 @@ void set_interval() {
      if(val < 2000) { timeoutInterval = 2000; }
      else if(val > 86400) { timeoutInterval = 86400; }
      else { timeoutInterval = val; }
+  }
+}
+
+/*
+ Logs data to SD card if SD card is available
+*/
+void log_data() {
+  if (sdAvailable) {
+     File dataFile = SD.open("datalog.txt", FILE_WRITE);
+     if (dataFile) {
+       dataFile.println(READING);
+       dataFile.close();
+     } else {
+       cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
+     } 
+  }
+}
+
+/* command 008
+Suspends logging and dumps the data to the serial port
+*/
+void dump_data() {
+  if (sdAvailable) {
+     //suspend reading
+     suspend=true;
+     File dataFile = SD.open("datalog.txt");
+     if (dataFile) {
+       while (dataFile.available()) {
+         Serial << dataFile.read() << endl;
+       }
+     } else {
+       cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
+     }
+     //resume reading
+     suspend=false;
+  }  
+}
+
+/* command 009
+Deletes the log file
+*/
+void delete_data() {
+  if (sdAvailable) {
+    SD.remove("datalog.txt");
   }
 }
 
@@ -280,6 +351,14 @@ void setup(void) {
 
    // ready
    arduino_ready();
+
+   //SD chip select setup
+   pinMode(SD_CS, OUTPUT);
+   if (!SD.begin(SD_CS)) {
+     cmdMessenger.sendCmd(kERR,readString(SD_CARD_INIT));
+   } else {
+     sdAvailable = true;
+   }
 }
 
 

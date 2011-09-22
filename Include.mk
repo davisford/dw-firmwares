@@ -86,12 +86,20 @@ AVRDUDE = avrdude
 #=== predefined variable override ===
 # use "make -p -f/dev/null" to see the default rules and definitions
 
+#Troy added next line from IDE build.verbose
+#COMMON_FLAGS += -c -g -Os -w -ffunction-sections -fdata-sections -DARDUINO=18
 # Build C and C++ flags. Include path information must be placed here
 COMMON_FLAGS = -DF_CPU=$(F_CPU) -mmcu=$(MCU) $(DEFS)
 # COMMON_FLAGS += -gdwarf-2
 COMMON_FLAGS += -Os
+# Troy added next two lines - a little smaller, but still not enough
+#COMMON_FLAGS += -fno-inline-small-functions -ffunction-sections -fdata-sections -fno-inline-functions
+#COMMON_FLAGS += -fno-split-wide-types -fno-tree-scev-cprop
+
+#Troy removed next two lines
 COMMON_FLAGS += -Wall -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 COMMON_FLAGS += -I. 
+
 COMMON_FLAGS += -I$(ARDUINO_PATH)hardware/arduino/cores/arduino
 COMMON_FLAGS += $(addprefix -I,$(EXTRA_DIRS))
 
