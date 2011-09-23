@@ -48,8 +48,8 @@ CmdMessenger cmdMessenger = CmdMessenger(Serial, field_separator, command_separa
 static char STR_BUF[50];
 
 // Timeout handling
-long timeoutInterval = 2000; // 2 seconds
-long previousMillis = 0;
+long timeoutInterval = 600000; // 10 minutes
+long previousMillis = -1 * timeoutInterval;
 int counter = 0;
 
 //SD chip select
@@ -182,6 +182,8 @@ void readSensors() {
   byte data[12];
   int LoByte, HiByte, Temp, SignBit, TempC, Whole, Fract;
 
+  unsigned long timestamp = millis();
+
   for (sensor=0; sensor<numSensors; sensor++) {
 
     if ( OneWire::crc8( addr[sensor], 7) != addr[sensor][7]) {
@@ -250,7 +252,7 @@ void readSensors() {
 	addr[sensor][7],
 	TempStr);
 
-    log_data();
+    log_data(timestamp);
 
     cmdMessenger.sendCmd(kACK, READING);
 
@@ -258,7 +260,7 @@ void readSensors() {
 }
 
 /* command 007
- Sets the timeout interval
+ Sets the timeout interval between 2 sec and 24 hours.
 */
 void set_interval() {
   while (cmdMessenger.available()) {
@@ -267,7 +269,7 @@ void set_interval() {
      int val = atoi(buf);
      // sanity check this value
      if(val < 2000) { timeoutInterval = 2000; }
-     else if(val > 86400) { timeoutInterval = 86400; }
+     else if(val > 86400000) { timeoutInterval = 86400000; }
      else { timeoutInterval = val; }
   }
 }
@@ -275,10 +277,12 @@ void set_interval() {
 /*
  Logs data to SD card if SD card is available
 */
-void log_data() {
+void log_data(unsigned long timestamp) {
   if (sdAvailable) {
      File dataFile = SD.open("datalog.txt", FILE_WRITE);
      if (dataFile) {
+       dataFile.print(timestamp);
+       dataFile.print(",");
        dataFile.println(READING);
        dataFile.close();
      } else {
@@ -296,9 +300,12 @@ void dump_data() {
      suspend=true;
      File dataFile = SD.open("datalog.txt");
      if (dataFile) {
+       Serial.println("");
        while (dataFile.available()) {
-         Serial << dataFile.read() << endl;
+         Serial.write(dataFile.read());
        }
+       dataFile.close();
+       Serial.println("");
      } else {
        cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
      }
