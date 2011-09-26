@@ -38,8 +38,8 @@ byte addr[MAX_DS1820_SENSORS][8];
 int numSensors;
 
 // Mustnt conflict / collide with our message payload data. Fine if we use base64 library ^^ above
-char field_separator = ',';
-char command_separator = ';';
+const char field_separator = ',';
+const char command_separator = ';';
 
 // Attach a new CmdMessenger object to the default Serial port
 CmdMessenger cmdMessenger = CmdMessenger(Serial, field_separator, command_separator);
@@ -49,24 +49,28 @@ static char STR_BUF[50];
 
 // Timeout handling
 long timeoutInterval = 600000; // 10 minutes
+//long timeoutInterval = 2000; // 10 minutes
 long previousMillis = -1 * timeoutInterval;
 int counter = 0;
 
 //SD chip select
 const int SD_CS = 10;
+char filename[12] = "datalog.txt";
 boolean sdAvailable = false;
 File dataFile;
 boolean suspend = false;
 
+static char READING[35];
+
 // string constants stored in flash
 enum {
-   SCAN_COMPLETE,
-   CRC_INVALID,
-   WRONG_DEVICE,
-   DAISY_READY,
-   UNKNOWN_CMD,
-   SD_CARD_INIT,
-   SD_CARD_FAILURE
+  SCAN_COMPLETE,
+  CRC_INVALID,
+  WRONG_DEVICE,
+  DAISY_READY,
+  UNKNOWN_CMD,
+  SD_CARD_INIT,
+  SD_CARD_FAILURE
 };
 
 prog_char string0[] PROGMEM = "1-wire scan complete. Number of sensors found: "; // size=48
@@ -78,13 +82,13 @@ prog_char string5[] PROGMEM = "SD card failed init or not inserted";
 prog_char string6[] PROGMEM = "SD card file read/write failed";
 
 PROGMEM const char *string_table[] = {
- string0, 
- string1, 
- string2,
- string3,
- string4,
- string5,
- string6
+  string0, 
+  string1, 
+  string2,
+  string3,
+  string4,
+  string5,
+  string6
 };
 
 // __________________ FUNCTION DECLARATIONS ____________________________________
@@ -100,33 +104,33 @@ void delete_data();
 
 // __________________ CMD LISTING (TX/RX) ______________________________________
 enum {
-   kCOMM_ERROR		= 000,	// serial port comm error
-   kACK			= 001,	// ack command was received
-   kARDUINO_READY	= 002,	// after setup
-   kERR			= 003,	// bad command or error
-	
-   kSEND_CMDS_END,		// DO NOT DELETE
+  kCOMM_ERROR		= 000,	// serial port comm error
+  kACK			= 001,	// ack command was received
+  kARDUINO_READY	= 002,	// after setup
+  kERR			= 003,	// bad command or error
+
+  kSEND_CMDS_END,		// DO NOT DELETE
 };
 
 messengerCallbackFunction messengerCallbacks[] = {
-   scan_onewire,	// 004
-   get_num_sensors,	// 005
-   readSensors,		// 006
-   set_interval,	// 007
-   dump_data,           // 008
-   delete_data          // 009
+  scan_onewire,	// 004
+  get_num_sensors,	// 005
+  readSensors,		// 006
+  set_interval,	// 007
+  dump_data,           // 008
+  delete_data          // 009
 };
 
 // __________________ DEFAULT CALLBACKS ________________________________________
 
 /* command 002 */
 void arduino_ready() {
-   cmdMessenger.sendCmd(kACK, readString(DAISY_READY));
+  cmdMessenger.sendCmd(kACK, readString(DAISY_READY));
 }
 
 /* command 003 */
 void unknownCmd() {
-   cmdMessenger.sendCmd(kERR, readString(UNKNOWN_CMD));
+  cmdMessenger.sendCmd(kERR, readString(UNKNOWN_CMD));
 }
 
 // __________________ USER DEFINED CALLBACKS ___________________________________
@@ -134,7 +138,7 @@ void unknownCmd() {
 /* command 004 
  This scans the wire for devices and populates the internal array with the list
  of addresses it found
-*/
+ */
 void scan_onewire() {
   // reset numSensors
   numSensors = 0;
@@ -142,7 +146,8 @@ void scan_onewire() {
   for (int i=0; i<MAX_DS1820_SENSORS; i++) {
     if (true == onewire.search(addr[i])) {
       numSensors++;
-    } else {
+    } 
+    else {
       // print out the number of sensors we found
       char val[12];
       char msg[sizeof(string0) + sizeof(val)];    
@@ -155,25 +160,23 @@ void scan_onewire() {
       cmdMessenger.sendCmd(kACK, msg);
       return;
     }
-   }
+  }
 }
 
 /* command 005
  Returns the number of sensors found from the last scan
-*/
+ */
 void get_num_sensors() {
-   char buf[12];
-   cmdMessenger.sendCmd(kACK, ltoa(numSensors, buf, 10));
+  char buf[12];
+  cmdMessenger.sendCmd(kACK, ltoa(numSensors, buf, 10));
 }
 
 //int HighByte, LowByte, TReading, SignBit, Tc_100, Whole, Fract;
 //char buf[20];
 
-static char READING[35];
-
 /* command 006
  Scans through all known sensors and reads their data
-*/
+ */
 void readSensors() {
   if (suspend) {
     return;
@@ -233,148 +236,186 @@ void readSensors() {
     Fract = TempC % 100;
 
     // build up the string
-    char TempStr[sizeof(Whole) + sizeof(Fract) + 2] = { '\0' };
-    if(SignBit) { strcat(TempStr, "-"); }
-    char val[4] = { '\0' };
+    char TempStr[sizeof(Whole) + sizeof(Fract) + 2] = { 
+      '\0'                                     };
+    if(SignBit) { 
+      strcat(TempStr, "-"); 
+    }
+    char val[4] = { 
+      '\0'                                     };
     strcat(TempStr, itoa(Whole, val, 10));
     strcat(TempStr, ".");
-    if(Fract < 10) { strcat(TempStr, "0"); }
+    if(Fract < 10) { 
+      strcat(TempStr, "0"); 
+    }
     strcat(TempStr, itoa(Fract, val, 10)); 
-    
+
+    if (suspend) {
+      return;
+    }
     sprintf(READING, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X,%s",
-	addr[sensor][0],
-	addr[sensor][1],
-	addr[sensor][2],
-	addr[sensor][3],
-	addr[sensor][4],
-	addr[sensor][5],
-	addr[sensor][6],
-	addr[sensor][7],
-	TempStr);
+    addr[sensor][0],
+    addr[sensor][1],
+    addr[sensor][2],
+    addr[sensor][3],
+    addr[sensor][4],
+    addr[sensor][5],
+    addr[sensor][6],
+    addr[sensor][7],
+    TempStr);
 
     log_data(timestamp);
 
     cmdMessenger.sendCmd(kACK, READING);
-
   }
 }
 
 /* command 007
  Sets the timeout interval between 2 sec and 24 hours.
-*/
+ */
 void set_interval() {
   while (cmdMessenger.available()) {
-     char buf[10] = {'\0'};
-     cmdMessenger.copyString(buf, 10);
-     int val = atoi(buf);
-     // sanity check this value
-     if(val < 2000) { timeoutInterval = 2000; }
-     else if(val > 86400000) { timeoutInterval = 86400000; }
-     else { timeoutInterval = val; }
+    char buf[10] = {
+      '\0'                                };
+    cmdMessenger.copyString(buf, 10);
+    int val = atoi(buf);
+    // sanity check this value
+    if(val < 2000) { 
+      timeoutInterval = 2000; 
+    }
+    else if(val > 86400000) { 
+      timeoutInterval = 86400000; 
+    }
+    else { 
+      timeoutInterval = val; 
+    }
   }
 }
 
 /*
  Logs data to SD card if SD card is available
-*/
+ */
 void log_data(unsigned long timestamp) {
-  if (sdAvailable) {
-     File dataFile = SD.open("datalog.txt", FILE_WRITE);
-     if (dataFile) {
-       dataFile.print(timestamp);
-       dataFile.print(",");
-       dataFile.println(READING);
-       dataFile.close();
-     } else {
-       cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
-     } 
+  if (!sdAvailable) {
+    return;
   }
+
+  if (!dataFile) {
+    dataFile = SD.open(filename, FILE_WRITE);
+  }
+
+  if (!dataFile) {
+    cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
+    return;
+  }
+
+  dataFile.print(timestamp);
+  dataFile.print(",");
+  dataFile.println(READING);
+  dataFile.close();
 }
 
 /* command 008
-Suspends logging and dumps the data to the serial port
-*/
+ Suspends logging and dumps the data to the serial port
+ */
 void dump_data() {
-  if (sdAvailable) {
-     //suspend reading
-     suspend=true;
-     File dataFile = SD.open("datalog.txt");
-     if (dataFile) {
-       Serial.println("");
-       while (dataFile.available()) {
-         Serial.write(dataFile.read());
-       }
-       dataFile.close();
-       Serial.println("");
-     } else {
-       cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
-     }
-     //resume reading
-     suspend=false;
-  }  
+  if (!sdAvailable) {
+    return;
+  }
+
+  suspend=true; //suspend logging
+  if (dataFile) {
+    dataFile.close();
+  }
+
+  dataFile = SD.open(filename, FILE_READ);
+
+  if (!dataFile) {
+    cmdMessenger.sendCmd(kERR,readString(SD_CARD_FAILURE));
+    suspend=false;
+    return;
+  }
+
+  Serial.println("");
+  while (dataFile.available()) {
+    Serial.write(dataFile.read());
+  }
+  dataFile.close();
+  Serial.println("");
+  suspend=false; //resume logging
 }
 
 /* command 009
-Deletes the log file
-*/
+ Deletes the log file
+ */
 void delete_data() {
-  if (sdAvailable) {
-    SD.remove("datalog.txt");
+  if (!sdAvailable) {
+    return;
   }
+
+  suspend=true; //suspend logging
+
+  if (dataFile) {
+    dataFile.close();
+  }
+
+  SD.remove(filename);
+  suspend=false; //resume logging
 }
 
 /* copies a string from flash into the static STR_BUF SRAM var, returns the pointer */
 char* readString(int idx) {
-   strcpy_P(STR_BUF, (char*) pgm_read_word( &(string_table[idx]) ) );
-   return STR_BUF;
+  strcpy_P(STR_BUF, (char*) pgm_read_word( &(string_table[idx]) ) );
+  return STR_BUF;
 }
 
 // __________________ S E T U P ________________________________________________
 
 void attach_callbacks(messengerCallbackFunction* callbacks) {
-   int i=0;
-   int offset = kSEND_CMDS_END;
-   while(callbacks[i]) {
-	cmdMessenger.attach(offset+i, callbacks[i]);
-	i++;
-   }
+  int i=0;
+  int offset = kSEND_CMDS_END;
+  while(callbacks[i]) {
+    cmdMessenger.attach(offset+i, callbacks[i]);
+    i++;
+  }
 }
 
 void setup(void) {
-   // listen on serial for messages from pc/phone
-   Serial.begin(57600);
+  // listen on serial for messages from pc/phone
+  Serial.begin(57600);
 
-   cmdMessenger.print_LF_CR();
+  cmdMessenger.print_LF_CR();
 
-   // attach default/generic callbacks
-   cmdMessenger.attach(kARDUINO_READY, arduino_ready);
-   cmdMessenger.attach(unknownCmd);
+  // attach default/generic callbacks
+  cmdMessenger.attach(kARDUINO_READY, arduino_ready);
+  cmdMessenger.attach(unknownCmd);
 
-   // attach user-defined callbacks
-   attach_callbacks(messengerCallbacks);
+  // attach user-defined callbacks
+  attach_callbacks(messengerCallbacks);
 
-   // scan the wire
-   scan_onewire();
+  // scan the wire
+  scan_onewire();
 
-   // ready
-   arduino_ready();
+  // ready
+  arduino_ready();
 
-   //SD chip select setup
-   pinMode(SD_CS, OUTPUT);
-   if (!SD.begin(SD_CS)) {
-     cmdMessenger.sendCmd(kERR,readString(SD_CARD_INIT));
-   } else {
-     sdAvailable = true;
-   }
+  //SD chip select setup
+  pinMode(SD_CS, OUTPUT);
+  if (SD.begin(SD_CS)) {
+    sdAvailable = true;
+  } 
+  else {
+    cmdMessenger.sendCmd(kERR,readString(SD_CARD_INIT));
+  }    
 }
-
 
 // ___________________ M A I N ( ) _____________________________________________
 
 void timeout()
 {
   readSensors();
-}  
+}
+
 
 void loop() 
 {
@@ -390,7 +431,3 @@ void loop()
 
   // forever...
 }
-
-
-
-
